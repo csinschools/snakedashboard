@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Pivot Demo</title>
+        <!-- external libs from cdnjs -->
+        <script type="text/javascript" src="libs/jquery.min.js"></script>
+        <script type="text/javascript" src="libs/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="libs/papaparse.min.js"></script>
+        <script src="libs/plotly-basic-latest.min.js"></script>        
+
+        <!-- PivotTable.js libs from ../dist -->
+        <link rel="stylesheet" type="text/css" href="libs/pivot.css">
+        <script type="text/javascript" src="libs//pivot.js"></script>
+        <script type="text/javascript" src="libs//plotly_renderers.js"></script>        
+        <style>
+            body {font-family: Verdana;}
+            body {
+                font-family: Verdana;
+                margin: 20px;
+                width: 1024px;
+
+                padding: 0 100px;
+            }
+            .session-container {
+                margin-bottom: 20px;
+            }
+            .session-container label {
+                margin-right: 10px;
+            }
+            .session-container input[type="text"] {
+                padding: 5px;
+                margin-right: 10px;
+            }
+            .session-container button {
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+            .editor-link {
+                display: block;
+                margin-top: 10px;
+            }            
+            .button-container {
+                display: flex;
+                justify-content: left;
+            }
+            #reloadButton {
+                width: 200px;
+                height: 60px;
+                background-color: greenyellow;
+                font-size: larger;
+            }
+            .outputs-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+                gap: 20px;
+                margin: 30px 0;
+                width: 100%;
+            }
+            .outputs-container > div {
+                min-height: 300px;
+                border: 1px solid #ccc;
+                padding: 10px;
+                box-sizing: border-box;
+                width: 100%;
+            }
+        </style>
+
+        <!-- optional: mobile support with jqueryui-touch-punch -->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
+    </head>
+    <body>
+        <p style="width: 800px"></p>
+        <div class="session-container">
+            <label for="sessionId">Session ID:</label>
+            <input type="text" id="sessionId" value="KIUP2Q8I">
+            <button id="generateBtn">Generate new session id</button>
+            <p>
+                Game Link: <a id="editorLink" class="editor-link" href="https://csinschools.io/editor/editor.html?project=demos/snakeScoredCompiled.js&compiled=1&session=KIUP2Q8I" target="_blank">https://csinschools.io/editor/editor.html?project=demos/snakeScoredCompiled.js&compiled=1&session=KIUP2Q8I</a>
+            </p>
+            
+        </div>        
+
+        <div class="button-container">
+            <button id="reloadButton">Refresh Data</button>    
+        </div>
+
+        <div class="outputs-container">
+            <div id="output1"></div>
+            <div id="output2"></div>
+            <div id="output3"></div>
+            <div id="output4"></div>
+        </div>
+        
+        <script type="text/javascript">
+            // This example loads the "Canadian Parliament 2012"
+            // dataset from a CSV instead of from JSON.
+            function loadPivotTable() {        
+                var derivers = $.pivotUtilities.derivers;
+                var renderers = $.extend($.pivotUtilities.renderers,
+                    $.pivotUtilities.plotly_renderers);     
+                    
+                const sessionId = $('#sessionId').val();
+                const baseUrl = 'https://codestore-348206.ts.r.appspot.com/datalogging/readlogcsv/?school=school_logging&session=';
+        
+                Papa.parse(baseUrl + sessionId, {
+                    download: true,
+                    skipEmptyLines: true,
+                    complete: function(parsed){
+
+                        $('#output1, #output2, #output3, #output4').empty();
+                        if (parsed.data.length === 0) {
+                            return;
+                        }
+
+
+                        let columnnames = ['Date','Player','Score','Moves','Snake Length'];
+                        const data = parsed.data.map((row, index) => {
+                            const obj = {};
+                            row.forEach((value, colIndex) => {
+                                obj[columnnames[colIndex]] = value;
+                            });
+                            return obj;
+                        });
+
+                        $("#output1").pivotUI(data, {
+                            showUI: false,
+                            renderers: renderers,
+                            rendererName: "Bar Chart",
+                            rendererOptions: {
+                                plotly: {
+                                    width: 600,
+                                    height: 480,
+                                    title: "Highest Score by Player",
+                                    yaxis: { title: "Highest Score" }
+
+                                }
+                            },
+                            rows: ["Player"], 
+                            vals: ["Score"],
+                            aggregatorName: "Maximum",
+                            colOrder: "value_z_to_a"
+                        });
+                        $("#output2").pivotUI(data, {
+                            showUI: false,
+                            renderers: renderers,
+                            rendererName: "Horizontal Bar Chart",
+                            rendererOptions: { 
+                                plotly: {   
+                                    colorway: ['yellow'],
+                                    width: 600, 
+                                    height: 480,
+                                    title: "Longest Snake by Player",
+                                    xaxis: { title: "Longest Snake Length" }
+                                }
+                            },              
+                            rows: ["Player"], 
+                            vals: ["Snake Length"],
+                            aggregatorName: "Maximum",
+                            colOrder: "value_z_to_a"
+                        });         
+                        $("#output3").pivotUI(data, {
+                            showUI: false,
+                            renderers: renderers,
+                            rendererName: "Horizontal Bar Chart",
+                            rendererOptions: {
+                                plotly: {
+                                    colorway: ['green'],
+                                    width: 600,
+                                    height: 480,
+                                    title: "Most Moves in a Game by Player",
+                                    xaxis: { title: "Most Moves in a Game" }
+                                }
+                            },
+                            rows: ["Player"], 
+                            vals: ["Moves"],
+                            aggregatorName: "Maximum",
+                            colOrder: "value_z_to_a"
+                        });
+                        $("#output4").pivotUI(data, {
+                            showUI: false,
+                            renderers: renderers,
+                            rendererName: "Bar Chart",
+                            rendererOptions: { 
+                                plotly: {   
+                                    width: 600, 
+                                    height: 480,
+                                    title: "Total Games Played by Player",
+                                    yaxis: { title: "Total Games Played" }
+                                }
+                            },              
+                            rows: ["Player"], 
+                            colOrder: "value_z_to_a"
+                        });                                                                                        
+                    }
+                });
+            }
+        
+            $(function(){
+
+                // Function to generate a random session ID
+                function generateSessionId() {
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                    let result = '';
+                    for (let i = 0; i < 8; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return result;
+                }
+
+                // Update the editor link when session ID changes
+                function updateEditorLink() {
+                    const sessionId = $('#sessionId').val();
+                    const baseUrl = 'https://csinschools.io/editor/editor.html?project=demos/snakeScoredCompiled.js&compiled=1&session=';
+                    $('#editorLink').attr('href', baseUrl + sessionId);
+                    $('#editorLink').html(baseUrl + sessionId);
+                }
+
+                // Handle generate button click
+                $('#generateBtn').click(function() {
+                    $('#sessionId').val(generateSessionId());
+                    updateEditorLink();
+                });
+
+                // Update link when session ID is manually changed
+                $('#sessionId').on('input', updateEditorLink);                
+
+                // Initialize session ID from URL parameter or default
+                const urlSessionId = getUrlParameter('session');
+                if (urlSessionId) {
+                    $('#sessionId').val(urlSessionId);
+                }
+                updateEditorLink();
+                loadPivotTable();
+             });
+        
+            // Add a button to reload
+            $("#reloadButton").click(function() {
+                loadPivotTable();
+            });     
+
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                var results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            }
+        </script>
+        
+    </body>
+</html>
