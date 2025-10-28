@@ -87,6 +87,41 @@
                 padding: 10px;
                 box-sizing: border-box;
                 width: 100%;
+                position: relative;
+            }
+            
+            /* Loading spinner styles */
+            .loading-spinner {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .spinner {
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 10px;
+            }
+            
+            .loading-text {
+                text-align: center;
+                color: #666;
+                font-size: 14px;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
         </style>
 
@@ -111,10 +146,30 @@
         </div>
 
         <div class="outputs-container">
-            <div id="output1"></div>
-            <div id="output2"></div>
-            <div id="output3"></div>
-            <div id="output4"></div>
+            <div id="output1">
+                <div class="loading-spinner" id="spinner1">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading data...</div>
+                </div>
+            </div>
+            <div id="output2">
+                <div class="loading-spinner" id="spinner2">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading data...</div>
+                </div>
+            </div>
+            <div id="output3">
+                <div class="loading-spinner" id="spinner3">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading data...</div>
+                </div>
+            </div>
+            <div id="output4">
+                <div class="loading-spinner" id="spinner4">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading data...</div>
+                </div>
+            </div>
         </div>
         
         <script type="text/javascript">
@@ -128,6 +183,9 @@
                 const sessionId = $('#sessionId').val();
                 const baseUrl = 'https://codestore-348206.ts.r.appspot.com/datalogging/readlogcsv/?school=school_logging&session=';
         
+                // Show loading spinners
+                $('#spinner1, #spinner2, #spinner3, #spinner4').show();
+        
                 Papa.parse(baseUrl + sessionId, {
                     download: true,
                     skipEmptyLines: true,
@@ -135,8 +193,16 @@
 
                         $('#output1, #output2, #output3, #output4').empty();
                         if (parsed.data.length === 0) {
+                            // Hide spinners if no data
+                            $('#spinner1, #spinner2, #spinner3, #spinner4').hide();
                             return;
                         }
+
+                        // Re-add spinners after clearing containers
+                        $('#output1').html('<div class="loading-spinner" id="spinner1"><div class="spinner"></div><div class="loading-text">Processing data...</div></div>');
+                        $('#output2').html('<div class="loading-spinner" id="spinner2"><div class="spinner"></div><div class="loading-text">Processing data...</div></div>');
+                        $('#output3').html('<div class="loading-spinner" id="spinner3"><div class="spinner"></div><div class="loading-text">Processing data...</div></div>');
+                        $('#output4').html('<div class="loading-spinner" id="spinner4"><div class="spinner"></div><div class="loading-text">Processing data...</div></div>');
 
 
                         let columnnames = ['Date','Player','Score','Moves','Snake Length'];
@@ -164,7 +230,10 @@
                             rows: ["Player"], 
                             vals: ["Score"],
                             aggregatorName: "Maximum",
-                            colOrder: "value_z_to_a"
+                            colOrder: "value_z_to_a",
+                            onRefresh: function() {
+                                $('#spinner1').hide();
+                            }
                         });
                         $("#output2").pivotUI(data, {
                             showUI: false,
@@ -182,7 +251,10 @@
                             rows: ["Player"], 
                             vals: ["Snake Length"],
                             aggregatorName: "Maximum",
-                            colOrder: "value_z_to_a"
+                            colOrder: "value_z_to_a",
+                            onRefresh: function() {
+                                $('#spinner2').hide();
+                            }
                         });         
                         $("#output3").pivotUI(data, {
                             showUI: false,
@@ -200,7 +272,10 @@
                             rows: ["Player"], 
                             vals: ["Moves"],
                             aggregatorName: "Maximum",
-                            colOrder: "value_z_to_a"
+                            colOrder: "value_z_to_a",
+                            onRefresh: function() {
+                                $('#spinner3').hide();
+                            }
                         });
                         $("#output4").pivotUI(data, {
                             showUI: false,
@@ -215,7 +290,10 @@
                                 }
                             },              
                             rows: ["Player"], 
-                            colOrder: "value_z_to_a"
+                            colOrder: "value_z_to_a",
+                            onRefresh: function() {
+                                $('#spinner4').hide();
+                            }
                         });                                                                                        
                     }
                 });
