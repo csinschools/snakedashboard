@@ -73,6 +73,13 @@
                 background-color: greenyellow;
                 font-size: larger;
             }
+            #downloadButton {
+                width: 200px;
+                height: 60px;
+                background-color: lightblue;
+                font-size: larger;
+                margin-left: 10px;
+            }            
             .outputs-container {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -143,6 +150,7 @@
 
         <div class="button-container">
             <button id="reloadButton">Refresh Data</button>    
+            <button id="downloadButton">Download Data</button>    
         </div>
 
         <div class="outputs-container">
@@ -173,6 +181,20 @@
         </div>
         
         <script type="text/javascript">
+            function downloadData() {
+                fetch(`https://codestore-348206.ts.r.appspot.com/datalogging/readlogcsv/?school=school_logging&session=${$('#sessionId').val()}&download=1`)   
+                .then(response => response.blob())             
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `snakedashboard_data_${$('#sessionId').val()}.csv`;
+                    a.click();
+                    // Clean up
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => console.error('Download failed:', error));
+            }
             // This example loads the "Canadian Parliament 2012"
             // dataset from a CSV instead of from JSON.
             function loadPivotTable() {        
@@ -341,6 +363,11 @@
             $("#reloadButton").click(function() {
                 loadPivotTable();
             });     
+            $("#downloadButton").click(function() {
+                loadPivotTable();
+                downloadData();
+            });
+
 
             function getUrlParameter(name) {
                 name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
